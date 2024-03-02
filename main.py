@@ -4,12 +4,15 @@ import platform
 from pathlib import Path
 
 import yolov5
+from dotenv import load_dotenv
 
 import util.config as c
 from util import DatConverter, log
 
 if platform.system() == "Windows":
     pathlib.PosixPath = pathlib.WindowsPath
+
+load_dotenv()
 
 
 def main():
@@ -41,6 +44,10 @@ def main():
             os.remove(result_path)
 
         results = model(img_file, size=c.IMG_SIZE)
+
+        if os.environ.get('SHOW_RESULTS', False):
+          results.show()
+
         predictions = results.pred[0]
 
         for det in reversed(predictions):
