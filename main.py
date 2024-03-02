@@ -1,4 +1,6 @@
 import os
+import pathlib
+import platform
 from pathlib import Path
 
 import yolov5
@@ -6,11 +8,14 @@ import yolov5
 import util.config as c
 from util import DatConverter, log
 
+if platform.system() == "Windows":
+    pathlib.PosixPath = pathlib.WindowsPath
+
 
 def main():
     log.info("Загружается модель нейросети")
     try:
-        model = yolov5.load(c.WEIGHTS)
+        model = yolov5.load(Path(c.WEIGHTS))
         model.conf = float(c.CONFIDENCE_THRESHOLD)
         log.info("Модель загружена")
     except Exception:
