@@ -31,12 +31,16 @@ class DatConverter:
     def __init__(self, dat_path: Path, images_path: Path):
         self.dat_path = dat_path
         self.images_path = images_path
+        self._dat_files = self.get_dat_files()
 
     def get_dat_files(self):
         return list(self.dat_path.glob("*.dat"))
 
+    def has_dat_files(self):
+        return len(self._dat_files) > 0
+
     def convert(self):
-        for dat_file_path in self.get_dat_files():
+        for dat_file_path in self._dat_files:
             jpg_fname = self.images_path / (dat_file_path.stem + ".jpg")
             if jpg_fname.exists():
                 continue

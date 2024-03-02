@@ -3,37 +3,38 @@ from pathlib import Path
 
 import yolov5
 
-from util import DatConverter
-
-# Веса обученной сети
-WEIGHTS = "weights/best.pt"
-# Директория с исходными буферами dat
-BUFFERS = "buffers"
-# Вероятность, при которой найденные объекты учитываются ( Чувствительность )
-CONFIDENCE_THRESHOLD = 0.1
-# Путь для директории с результатами предсказания
-RESULTS = "results"
-
-
-IMAGES = "images"
-# Размер изображения для нейросети (совпадает с размером, используемым во время обучения)
-IMG_SIZE = 1056
+import util.config as c
+from util import DatConverter, log
 
 
 def main():
-    DatConverter(Path(BUFFERS), Path(IMAGES)).convert()
+    dat_converter = DatConverter(Path(c.BUFFERS), Path(c.IMAGES))
 
-    model = yolov5.load(WEIGHTS)
-    model.conf = float(CONFIDENCE_THRESHOLD)
+    if not dat_converter.has_dat_files():
+        log.warning(f"Файлы dat в {c.BUFFERS} не обнаружены")
+        return
+    else:
+        log.info("Запущена конвертация dat в jpg")
+        dat_converter.convert()
 
-    img_files = list(Path(IMAGES).glob("*.jpg"))
+    log.info("Создается модель нейросети")
+    try:
+        model = yolov5.load(c.WEIGHTS)
+        model.conf = float(c.CONFIDENCE_THRESHOLD)
+    except Exception:
+        log.error("Не удалось загрузить модель")
+        return
 
+    img_files = list(Path(c.IMAGES).glob("*.jpg"))
+
+    log.info("Запускается предсказание и запись в txt")
     for img_file in img_files:
-        result_path = Path(RESULTS) / (img_file.stem + "_r.txt")
+        log.info("Поиск на " + img_file.name)
+        result_path = Path(c.RESULTS) / (img_file.stem + "_r.txt")
         if result_path.exists():
             os.remove(result_path)
 
-        results = model(img_file, size=IMG_SIZE)
+        results = model(img_file, size=c.IMG_SIZE)
         predictions = results.pred[0]
 
         for det in reversed(predictions):
@@ -46,8 +47,12 @@ def main():
             azimuth = round((x / 2048) * 360, 3)
             distance = round((y / 1200) * 360, 3)
 
-            with open(Path(RESULTS) / (img_file.stem + "_r.txt"), "a") as f:
+            with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "a") as f:
                 f.write(f"Az = {azimuth:.2f}, D = {distance * 1000:.2f},  N\n")
+
+
+    log.info("Поиск завершен")
+    log.info("Результаты записаны в " + c.RESULTS)
 
 
 if __name__ == "__main__":

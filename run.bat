@@ -12,7 +12,7 @@ set "main_script=main.py"
 
 REM Проверка существования виртуального окружения
 if not exist %venv_name% (
-    echo "Создание виртуального окружения..."
+    echo "Creating virtual environment..."
     %python_executable% -m venv %venv_name%
 )
 
@@ -36,4 +36,5 @@ REM Запуск main.py
 REM Деактивация виртуального окружения
 deactivate
 
-echo "Скрипт завершен."
+echo "Press any key to continue . . ."
+pause
