@@ -8,6 +8,15 @@ from util import DatConverter, log
 
 
 def main():
+    log.info("Загружается модель нейросети")
+    try:
+        model = yolov5.load(c.WEIGHTS)
+        model.conf = float(c.CONFIDENCE_THRESHOLD)
+        log.info("Модель загружена")
+    except Exception:
+        log.error("Не удалось загрузить модель")
+        return
+
     dat_converter = DatConverter(Path(c.BUFFERS), Path(c.IMAGES))
 
     if not dat_converter.has_dat_files():
@@ -16,14 +25,6 @@ def main():
     else:
         log.info("Запущена конвертация dat в jpg")
         dat_converter.convert()
-
-    log.info("Создается модель нейросети")
-    try:
-        model = yolov5.load(c.WEIGHTS)
-        model.conf = float(c.CONFIDENCE_THRESHOLD)
-    except Exception:
-        log.error("Не удалось загрузить модель")
-        return
 
     img_files = list(Path(c.IMAGES).glob("*.jpg"))
 
@@ -49,7 +50,6 @@ def main():
 
             with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "a") as f:
                 f.write(f"Az = {azimuth:.2f}, D = {distance * 1000:.2f},  N\n")
-
 
     log.info("Поиск завершен")
     log.info("Результаты записаны в " + c.RESULTS)

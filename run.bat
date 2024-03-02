@@ -24,8 +24,4 @@ call %venv_name%\Scripts\activate
 REM Запуск main.py
 %python_executable% %main_script%
 
-REM Деактивация виртуального окружения
-deactivate
-
-echo "Press any key to continue . . ."
 pause
