@@ -1,2 +1,10 @@
 venv/
 __pycache__/
+buffers/*
+results/*
+images/*
+weights/*
+!weights/.gitkeep
+!buffers/.gitkeep
+!results/.gitkeep
+!images/.gitkeep
