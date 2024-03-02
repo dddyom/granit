@@ -14,21 +14,12 @@ REM Проверка существования виртуального окр�
 if not exist %venv_name% (
     echo "Creating virtual environment..."
     %python_executable% -m venv %venv_name%
+    call %venv_name%\Scripts\activate
+    pip install -r %requirements_file%
 )
 
 REM Активация виртуального окружения
 call %venv_name%\Scripts\activate
-
-REM Проверка установленных библиотек
-set "installed_libs="
-for /f "delims=" %%i in ('pip freeze ^| find /i /v "pkg-resources"') do (
-    set "installed_libs=!installed_libs! %%i"
-)
-
-REM Установка библиотек из requirements.txt, если их нет
-for /f "delims=" %%i in (%requirements_file%) do (
-    echo !installed_libs! | find /i "%%i" >nul || pip install %%i
-)
 
 REM Запуск main.py
 %python_executable% %main_script%
