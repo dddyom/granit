@@ -5,6 +5,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
+from .logger import log
+
 # Colormap creating
 norm = Normalize(-1, 1)
 CMAP = LinearSegmentedColormap.from_list("", [[norm(-1.0), "0"], [norm(1.0), "yellow"]])  # black
@@ -44,4 +46,6 @@ class DatConverter:
             jpg_fname = self.images_path / (dat_file_path.stem + ".jpg")
             if jpg_fname.exists():
                 continue
+
+            log.info(f"Конвертация dat {dat_file_path.stem} в jpg")
             Buffer(dat_file_path=dat_file_path).save_jpg(jpg_fname=jpg_fname)

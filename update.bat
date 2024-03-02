@@ -1,6 +1,6 @@
 @echo off
 
-REM Выполнение git pull
+git reset --hard
 git pull
 
 echo "Success!"
