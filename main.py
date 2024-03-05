@@ -19,7 +19,9 @@ def main():
     log.info("Загружается модель нейросети")
     try:
         model = yolov5.load(Path(c.WEIGHTS))
-        model.conf = float(c.CONFIDENCE_THRESHOLD)
+
+
+        model.conf = float(os.environ.get("THRES", 0.1))
         log.info("Модель загружена")
     except Exception:
         log.error("Не удалось загрузить модель")

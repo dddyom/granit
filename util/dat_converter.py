@@ -1,3 +1,4 @@
+import os
 import struct
 from pathlib import Path
 
@@ -24,6 +25,12 @@ class Buffer:
             buffer.append(struct.unpack("<H", dat_file[i : i + 2]))
 
         self.matrix = np.reshape(np.array(buffer), (2048, 1200)).T
+
+        CF = os.environ.get("CF", 0)
+        if str(CF).isdigit() and int(CF) > 0:
+            max_matrix = self.matrix.max()
+            convert = np.vectorize(lambda x: min(x * int(CF), max_matrix))
+            self.matrix = convert(self.matrix)
 
     def save_jpg(self, jpg_fname: Path) -> None:
         plt.imsave(fname=jpg_fname, arr=self.matrix, cmap=CMAP, format="jpg")
