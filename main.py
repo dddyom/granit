@@ -39,18 +39,26 @@ def main():
     img_files = list(Path(c.IMAGES).glob("*.jpg"))
 
     log.info("Запускается предсказание и запись в txt")
+
+
+    all_path = Path(c.RESULTS) / "all.txt"
+    if all_path.exists():
+        os.remove(all_path)
+
     for img_file in img_files:
+
         log.info("Поиск на " + img_file.name)
         result_path = Path(c.RESULTS) / (img_file.stem + "_r.txt")
         if result_path.exists():
             os.remove(result_path)
-
         results = model(img_file, size=c.IMG_SIZE)
 
         if os.environ.get('SHOW_RESULTS', False):
           results.show()
 
         predictions = results.pred[0]
+        with open(Path(c.RESULTS) / "all.txt", "a") as f:
+            f.write(f"{img_file.name}\n")
 
         for det in reversed(predictions):
             xyxy = det[:4]
@@ -62,8 +70,18 @@ def main():
             azimuth = round((x / 2048) * 360, 3)
             distance = round((y / 1200) * 360, 3)
 
-            with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "a") as f:
-                f.write(f"Az = {azimuth:.2f}, D = {distance * 1000:.2f},  N\n")
+            s = f"Az = {azimuth:.2f}, D = {distance * 1000:.2f},  N\n"
+
+            with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "w") as f:
+                f.write(s)
+
+
+            with open(Path(c.RESULTS) / "all.txt", "a") as f:
+                f.write('\t' + s)
+
+        with open(Path(c.RESULTS) / "all.txt", "a") as f:
+            f.write('\n')
+
 
     log.info("Поиск завершен")
     log.info("Результаты записаны в " + c.RESULTS)
