@@ -62,7 +62,7 @@ def main():
 
         for det in reversed(predictions):
             xyxy = det[:4]
-            # conf = det[4]
+            conf = det[4]
             # cls = det[5]
 
             x = int(xyxy[0] + ((xyxy[2] - xyxy[0]) / 2))
@@ -70,7 +70,7 @@ def main():
             azimuth = round((x / 2048) * 360, 3)
             distance = round((y / 1200) * 360, 3)
 
-            s = f"Az = {azimuth:.2f}, D = {distance * 1000:.2f},  N\n"
+            s = f"Az = {azimuth:.2f}, D = {distance * 1000:.2f}, CONF = {conf:.2f}  N\n"
 
             with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "w") as f:
                 f.write(s)
