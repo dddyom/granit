@@ -56,3 +56,11 @@ class DatConverter:
 
             log.info(f"Конвертация dat {dat_file_path.stem} в jpg")
             Buffer(dat_file_path=dat_file_path).save_jpg(jpg_fname=jpg_fname)
+
+    def convert_single(self, dat_file_path):
+        if not ("SO" and "dat" in str(dat_file_path)):
+            return
+        jpg_fname = self.images_path / (dat_file_path.stem + ".jpg")
+        log.info(f"Конвертация dat {dat_file_path.stem} в jpg")
+        Buffer(dat_file_path=dat_file_path).save_jpg(jpg_fname=jpg_fname)
+        return jpg_fname

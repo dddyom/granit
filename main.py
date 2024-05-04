@@ -1,13 +1,15 @@
 import os
 import pathlib
 import platform
+import time
 from pathlib import Path
 
 import yolov5
 from dotenv import load_dotenv
+from watchdog.observers import Observer
 
 import util.config as c
-from util import DatConverter, log
+from util import DatConverter, FolderListener, Predictor, log
 
 if platform.system() == "Windows":
     pathlib.PosixPath = pathlib.WindowsPath
@@ -15,18 +17,18 @@ if platform.system() == "Windows":
 load_dotenv()
 
 
-def main():
+def load_model():
     log.info("Загружается модель нейросети")
     try:
         model = yolov5.load(Path(c.WEIGHTS))
-
-
         model.conf = float(os.environ.get("THRES", 0.1))
-        log.info("Модель загружена")
+        return model
     except Exception:
         log.error("Не удалось загрузить модель")
         return
 
+
+def convert_dat_buffers():
     dat_converter = DatConverter(Path(c.BUFFERS), Path(c.IMAGES))
 
     if not dat_converter.has_dat_files():
@@ -36,55 +38,55 @@ def main():
         log.info("Запущена конвертация dat в jpg")
         dat_converter.convert()
 
+
+def predict(model):
     img_files = list(Path(c.IMAGES).glob("*.jpg"))
 
     log.info("Запускается предсказание и запись в txt")
-
 
     all_path = Path(c.RESULTS) / "all.txt"
     if all_path.exists():
         os.remove(all_path)
 
     for img_file in img_files:
-
-        log.info("Поиск на " + img_file.name)
-        result_path = Path(c.RESULTS) / (img_file.stem + "_r.txt")
-        if result_path.exists():
-            os.remove(result_path)
-        results = model(img_file, size=c.IMG_SIZE)
-
-        if os.environ.get('SHOW_RESULTS', False):
-          results.show()
-
-        predictions = results.pred[0]
-        with open(Path(c.RESULTS) / "all.txt", "a") as f:
-            f.write(f"{img_file.name}\n")
-
-        for det in reversed(predictions):
-            xyxy = det[:4]
-            conf = det[4]
-            # cls = det[5]
-
-            x = int(xyxy[0] + ((xyxy[2] - xyxy[0]) / 2))
-            y = int(xyxy[1] + ((xyxy[3] - xyxy[1]) / 2))
-            azimuth = round((x / 2048) * 360, 3)
-            distance = round((y / 1200) * 360, 3)
-
-            s = f"Az = {azimuth:.2f}, D = {distance:.2f}, CONF = {conf:.2f}  N\n"
-
-            with open(Path(c.RESULTS) / (img_file.stem + "_r.txt"), "w") as f:
-                f.write(s)
-
-
-            with open(Path(c.RESULTS) / "all.txt", "a") as f:
-                f.write('\t' + s)
-
-        with open(Path(c.RESULTS) / "all.txt", "a") as f:
-            f.write('\n')
-
+        Predictor(img_file, model).call()
 
     log.info("Поиск завершен")
     log.info("Результаты записаны в " + c.RESULTS)
+
+
+def default_run(model):
+    convert_dat_buffers()
+    predict(model)
+
+
+def run_as_folder_listener(model):
+    folder_path = Path(c.BUFFERS)
+
+    observer = Observer()
+    observer.schedule(FolderListener(model=model), folder_path, recursive=True)
+    observer.start()
+
+    try:
+        log.info("Запущен слушатель изменений в " + str(folder_path))
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+
+    observer.join()
+
+
+def main():
+    model = load_model()
+    if not model:
+        log.info("Модель загружена")
+        return
+
+    if os.environ.get("BUFFER_LISTENER"):
+        run_as_folder_listener(model)
+    else:
+        default_run(model)
 
 
 if __name__ == "__main__":
